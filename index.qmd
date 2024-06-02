@@ -15,7 +15,7 @@ filters:
 #| warning: false
 
 # Download data
-download.file("https://raw.githubusercontent.com/brunoine/python2024/main/data/erros_geo.csv",
+download.file("https://raw.githubusercontent.com/brunoine/geo_demo/main/erros_geo.csv",
               "erros_geo.csv")
 
 dados <- read.csv2("erros_geo.csv")

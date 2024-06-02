@@ -1,0 +1,131 @@
+---
+title: "Teste Geo"
+format: 
+  html:
+    code-fold: true
+    code-summary: "Show the code"
+editor: source
+filters: 
+ - webr
+---
+
+```{webr-r}
+#| context: setup
+#| message: false
+#| warning: false
+
+# Download data
+download.file("https://raw.githubusercontent.com/brunoine/python2024/main/data/erros_geo.csv",
+              "erros_geo.csv")
+
+dados <- read.csv2("erros_geo.csv")
+
+
+library(dplyr)
+library(ggplot2)
+
+```
+
+## Descrição de erros
+
+Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
+
+## Running Code
+
+When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
+
+```{webr-r}
+#| message: false
+#| warning: false
+
+# distribuição pelo CP4
+dados %>% mutate(cp4 = substr(cp7_ctt, 1, 4)) %>% 
+  count(cp4) %>% 
+  mutate(fraction = n / sum(n),
+         ymax = cumsum(fraction),
+         ymin = c(0, head(ymax, -1)),
+         labelPosition = (ymax + ymin) / 2,
+         label = paste0("CP-", cp4, "\n n: ", n)) %>%
+  ggplot(aes(ymax=ymax, ymin=ymin, xmax=4, xmin=3, fill=cp4)) +
+  geom_rect() +
+  geom_label( x=3.5, aes(y=labelPosition, label=label), size=6) +
+  scale_fill_brewer(palette=3) +
+  coord_polar(theta="y") +
+  xlim(c(2, 4)) +
+  ggtitle("Falta o TITULO") + 
+  theme_void() +
+  theme(legend.position = "none")
+  
+```
+
+You can add options to executable code like this
+
+```{webr-r}
+#| message: false
+#| warning: false
+# frequencia do tipo de erros
+
+dados_erros <- dados %>% count(classe_erro) %>%
+  mutate(y = seq_along(classe_erro)*0.9)
+
+ggplot(dados_erros)+
+  geom_col(aes(n, classe_erro), fill = "#076fa2", width = 0.6) +
+   scale_x_continuous(
+    limits = c(0, 1250),
+    breaks = seq(0, 1250, by = 250),
+    expand = c(0, 0), # The horizontal axis does not extend to either side
+    position = "top"  # Labels are located on the top
+    ) +
+  # The vertical axis only extends upwards
+  scale_y_discrete(expand = expansion(add = c(0, 0.5))) +
+  theme(
+    # Set background color to white
+    panel.background = element_rect(fill = "white"),
+    # Set the color and the width of the grid lines for the horizontal axis
+    panel.grid.major.x = element_line(color = "#A8BAC4", size = 0.3),
+    # Remove tick marks by setting their length to 0
+    axis.ticks.length = unit(0, "mm"),
+    # Remove the title for both axes
+    axis.title = element_blank(),
+    # Only left line of the vertical axis is painted in black
+    axis.line.y.left = element_line(color = "black"),
+    # Remove labels from the vertical axis
+    axis.text.y = element_blank()
+  ) +
+  geom_text(
+    data = subset(dados_erros, n < 250),
+    aes(n, y = classe_erro, label = classe_erro),
+    hjust = 0,
+    nudge_x = 0.3,
+    colour = "#076fa2",
+    size = 4
+  ) +
+  geom_text(
+    data = subset(dados_erros, n >= 250),
+    aes(0, y = classe_erro, label = classe_erro),
+    hjust = 0,
+    nudge_x = 0.3,
+    colour = "white",
+    size = 4
+  ) +
+  labs(
+    title = "Numero de erros por classe"
+  )
+```
+
+## comprimentos por classe de erro
+
+```{webr-r}
+#| message: false
+#| warning: false
+dados %>%
+  ggplot(aes(x=classe_erro, y=comprimento, fill = classe_erro)) +
+  geom_boxplot(notch=TRUE) +
+  scale_fill_brewer(palette="Blues") + # PuOr; PiYG
+  ylim(0, 100) +
+  labs(title="Comprimento por classe de erro",
+       x="Classe de erro", 
+       y = "Comprimento (m)") +
+  theme_classic() +
+  theme(legend.position = 'none')
+```
